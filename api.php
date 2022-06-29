@@ -1,6 +1,6 @@
 <?php
-
 header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Headers: *');
 date_default_timezone_set('America/Detroit');
 
 require("./config.php");
@@ -66,6 +66,7 @@ if($action === "login") {
 		$username = $row['username'];
 		$email = $row['email'];
 		$passwordhash = $row['password'];
+		$admin = $row['admin'];
 
 		//verify password provided matches the db hash
 		$pwmatch = password_verify($password, $passwordhash);
@@ -100,7 +101,7 @@ if($action === "login") {
 		$result['id'] = $id;
 		$result['username'] = $username;
 		$result['email'] = $email;
-
+		$result['isadmin'] = $admin;
 	}else{
         //no user found
 		$result['error'] = true;
@@ -209,6 +210,9 @@ if($action === "register") {
 }
 
 if($action === "newlink"){
+
+
+
 	if(!isset($_POST['user_id'])){
 		//no user id given 
 		$result['error'] = true;
@@ -229,7 +233,7 @@ if($action === "newlink"){
 	}else{
 		$token = $_POST['token'];
 	}
-
+	
 	if(!validate_token($token)){
 		//if token invalid for whatever reason, stop now
 		$result['error'] = true;
@@ -244,7 +248,7 @@ if($action === "newlink"){
 	if($user['data']->id !== $userid){
 		//if the user sends a token that does not belong to the current logged in user
 		$result['error'] = true;
-		$result['message'] = "Token Invalid.";
+		$result['message'] = "User not match. $userid";
 		echo json_encode($result); 
         return;
 	}
@@ -474,6 +478,35 @@ if($action === "updatelink"){
 
 	// at this point link should be created
 	$result['message'] = "Successfully updated link: $link_name";
+
+}
+
+if($action === "getlinks"){
+
+	$sql = $conn->query("SELECT * FROM links");
+	$links = array();
+	while($row = $sql->fetch_assoc()){
+		$link_id = $row['id'];
+		$link_name = $row['link_name'];
+		$link_description = $row['link_desc'];
+		$link_url = $row['link_url'];
+		$link_icon = $row['link_icon'];
+		$link_color = $row['link_color'];
+		$link_border_color = $row['link_border_color'];
+
+		$link = array(
+			'link_id' => $link_id,
+			'link_name' => $link_name,
+			'link_description' => $link_description,
+			'link_url' => $link_url,
+			'link_icon' => $link_icon,
+			'link_color' => $link_color,
+			'link_border_color' => $link_border_color,
+		);
+		array_push($links,$link);
+	}
+	$result['message'] = "Successfully pulled links.";
+	$result['links'] = $links;
 
 }
 
